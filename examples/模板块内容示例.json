@@ -1,8 +1,0 @@
-{
-  "_说明": "这是给 .motion 模板用的内容文件示例。字段名必须与模板作者的说明一致——填错名字不会报错，只会呈现为空内容。多余字段会被忽略。",
-  "_用法": "python render.py --template 模板.motion --params-file 本文件.json --output 成片.mp4",
-  "title": "开场标题",
-  "subtitle": "副标题",
-  "body": "正文内容",
-  "footer": "结尾落款"
-}

@@ -1,7 +1,7 @@
 ---
 name: o-motion-skill
 description: "用模板生成视频。给一个模板（.motion 文件或网页模板目录）、填好内容、指定输出文件名，即可产出成片 mp4：自动匹配渲染方式、自动检查成品，检查不通过不交付并说明原因。适合把现成模板批量做成短视频的普通用户，无需懂渲染。"
-version: 0.3.0
+version: 0.3.1
 author: O_Motion Project
 license: MIT
 repository: https://github.com/beimeibeile/o-motion-skill
@@ -12,6 +12,7 @@ capabilities:
     params:
       template: "str - 模板路径（.motion 文件，或网页模板目录）"
       output: "str - 成片 mp4 路径（已存在则拒绝执行，不覆盖旧文件）"
+      init_params: "str, optional - 生成一份可直接填写的参数文件（第一次用某模板时推荐先跑这个）"
       params: "dict, optional - 模板块内容（JSON），字段名以模板说明为准"
       params_file: "str, optional - 内容 JSON 文件路径（推荐，避免终端吞引号）"
       width: "int, optional - .motion 一般不用填；网页模板为画面宽度，默认 1920"
@@ -39,17 +40,21 @@ capabilities:
 
 ## 怎么用
 
-**`.motion` 模板**：
+**`.motion` 模板**——第一次用某个模板，先让它给一份参数文件，不用猜字段名：
+
+```bash
+python render.py --template 模板.motion --init-params 内容.json
+```
+
+它会从模板内部取出一份**可以直接跑通**的参数（优先用模板作者给的示例），
+你只需把里面的文字换成自己的内容，然后出片：
 
 ```bash
 python render.py --template 模板.motion --params-file 内容.json --output 成片.mp4
 ```
 
-内容文件就是普通 JSON，字段名以模板作者的说明为准：
-
-```json
-{"title": "开场标题", "subtitle": "副标题", "body": "正文内容"}
-```
+模板对字段是严格校验的，多一个不认识的字段会直接报错并列出是哪几个；
+`--init-params` 生成的骨架已经按模板要求列全，照着改文字最省事。
 
 **网页模板目录**：
 
@@ -62,10 +67,10 @@ python render.py --template ./模板目录 --end 12 --width 1080 --height 1920 \
 - 竖屏写 1080×1920，横屏写 1920×1080
 - 模板自带渲染模块会自动找到，通常不用手填
 
-先用 `--probe` 确认环境就绪，再正式出片：
+先用 `--probe` 确认环境就绪，再正式出片（只自检，不出片，不需要给输出路径）：
 
 ```bash
-python render.py --template ./模板目录 --end 1 --probe --output unused.mp4
+python render.py --template ./模板目录 --probe
 ```
 
 ## 会自动做什么
@@ -85,8 +90,8 @@ python render.py --template ./模板目录 --end 1 --probe --output unused.mp4
 ## 已知限制
 
 - `.motion` 的画面尺寸与帧率由模板决定，不能改；要别的画幅请换对应模板
-- 网页模板目录必须自带 `_render/render_project.mjs`
-- 参数名与模板绑定，填错字段名不报错、只呈现为空——务必照模板说明的字段名填
+- 网页模板目录必须自带 `_render/render_project.mjs`，还需要 `playwright-core` 这个浏览器渲染模块（模板通常不自带，工具会自动查找或提示安装）
+- 参数是严格校验：多余字段直接报错，不会静默忽略——务必按 `--init-params` 生成的骨架填写
 - 同一模板重复出片请换输出名，工具不覆盖已有文件（这是刻意设计）
 
 ## 出错时
@@ -97,5 +102,7 @@ python render.py --template ./模板目录 --end 1 --probe --output unused.mp4
 |---|---|
 | 找不到渲染引擎 | 设 `MOTION_CORE_DIR`，或用 `--core-dir` 指定 |
 | 缺少渲染所需组件 | 按提示装 Node.js / Chrome / FFmpeg |
+| 需要一个浏览器渲染模块 | 在模板目录 `npm install playwright-core`，或用 `--playwright-module` 指定位置 |
+| 参数里有模板不认识的字段 | 删掉它列出的字段，或先用 `--init-params` 生成骨架 |
 | 输出文件已存在 | 换输出文件名 |
 | 成品没通过检查 | 按列出的原因调内容或换模板 |
